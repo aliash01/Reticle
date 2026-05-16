@@ -1,0 +1,50 @@
+# Unreal Engine generated folders
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/
+
+# Plugin generated folders
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
+
+# Generated Visual Studio / Rider / VS Code files
+.vs/
+.vscode/
+.idea/
+*.sln
+*.suo
+*.xcodeproj
+*.xcworkspace
+*.VC.db
+*.VC.opendb
+*.opensdf
+*.sdf
+*.user
+*.userosscache
+*.suo
+
+# Compiled source
+*.dll
+*.exe
+*.exp
+*.lib
+*.pdb
+*.ipdb
+*.iobj
+
+# Crash logs
+*.dmp
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local-only stuff
+*.log
+*.tmp
+
+# Don't ignore the empty Config folder structure, but ignore local backups
+Config/*.bak
