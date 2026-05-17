@@ -48,3 +48,6 @@ desktop.ini
 
 # Don't ignore the empty Config folder structure, but ignore local backups
 Config/*.bak
+
+# Claude Code local session state
+.claude/
