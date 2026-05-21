@@ -2,6 +2,7 @@
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
+#include "Common/Target/Target.h"
 
 AAssessmentPawn::AAssessmentPawn()
 {
@@ -26,5 +27,21 @@ void AAssessmentPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 void AAssessmentPawn::OnShoot(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Log, TEXT("Shoot!"));
+	FVector Start = GetActorLocation();
+	FVector End = Start + MaxRange;
+
+	FHitResult Hit;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(GetOwner());  // don't shoot yourself
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		Hit, Start, End, ECC_Visibility, Params);
+
+	if (bHit)
+	{
+		if (ATarget* Target = Cast<ATarget>(Hit.GetActor()))
+		{
+			Target->HandleHit(Hit);
+		}
+	}
 }

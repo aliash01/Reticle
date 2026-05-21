@@ -18,6 +18,9 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 protected:
+	UPROPERTY(EditAnywhere, Category = "Weapon")
+	float MaxRange = 10000.0f;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Input")
 	TObjectPtr<UInputAction> ShootAction;
 
