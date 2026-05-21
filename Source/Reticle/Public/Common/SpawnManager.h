@@ -7,6 +7,7 @@
 #include "SpawnManager.generated.h"
 
 class ATarget;
+class UBoxComponent;
 
 UCLASS()
 class RETICLE_API ASpawnManager : public AActor
@@ -15,11 +16,15 @@ class RETICLE_API ASpawnManager : public AActor
 
 public:
 	ASpawnManager();
+	void BeginPlay();
 
 	UFUNCTION(BlueprintCallable)
 	void OnLevelStart(int32 NumOfTargets, float SetTargetShowTime, float SetTargetHideTime);
 
 protected:
+	UPROPERTY(VisibleAnywhere, Category = "Spawning")
+	UBoxComponent* SpawnArea;
+
 	UPROPERTY(EditAnywhere, Category = "Spawning")
 	TSubclassOf<ATarget> TargetClass;
 
@@ -28,9 +33,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Spawning")
 	int32 MaxActiveTargets = 1;
-
-	UPROPERTY(EditAnywhere, Category = "Spawning")
-	FVector2D SpawnOffset = FVector2D(200, 200);
 
 	UPROPERTY(EditAnywhere, Category = "Spawning")
 	float MinSeparation = 100.0f;
@@ -62,7 +64,6 @@ private:
 	int32 CountActiveTargets() const;
 	ATarget* FindInactiveTarget() const;
 
-	TArray<FVector> GenerateSpawnPositions(int32 NumOfTargets);
 	FVector GenerateOnePosition();
 	bool IsTooCloseToActiveTarget(const FVector& Pos) const;
 

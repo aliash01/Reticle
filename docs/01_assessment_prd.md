@@ -49,6 +49,7 @@ Mixed-skill FPS players, hobbyist through competitive. The product is game-agnos
 - Per-subtest tutorial: 3–5 practice trials with on-screen guidance before each scored block.
 - Sens / FOV stored per profile; re-prompt if the player changes setup.
 - Optional latency probe (frame-time + monitor refresh) recorded for context, not for scoring.
+- Crosshair selection: player picks a preset or customises a reticle (see 6.6) before the first subtest; the choice persists per profile.
 
 ### 6.2 Subtests (v1)
 
@@ -79,9 +80,25 @@ All subtests use **fixed difficulty parameters** identical for every player, eve
 - Deltas vs prior session and vs personal best, shown numerically.
 - Session list with date, composite score, and links into that session's report and chat.
 
+### 6.6 Crosshair customization
+- The player can fully customise their reticle, on a par with the crosshair editors in Overwatch and Valorant. The crosshair is part of the player's aim setup, alongside sens and FOV, and applies consistently across every subtest, the warmup, the dashboard, and (later) all drills.
+- **Adjustable fields:**
+  - Shape: Dot (filled disc), Cross (4 arms with configurable centre gap), Plus (solid, no gap), Circle (hollow ring), T-Shape (no top arm).
+  - Colour and master opacity.
+  - Inner-line tier: length, thickness, per-element opacity, centre gap.
+  - Optional outer-line tier: length, thickness, opacity, offset beyond the inner arms.
+  - Optional centre dot: size, opacity (independent of shape choice — can be added on top of any cross/plus/circle).
+  - Optional outline: colour, thickness, opacity (visibility on bright/dark scenes).
+  - Circle radius (used when Shape = Circle).
+- **Presets:** the project ships at least three authored profiles ("Default Cross", "Pro Dot", "Centre + Outer") that the player can pick from. Custom edits are saved as a new named profile on the player's local profile.
+- **Persistence:** stored per profile, alongside sens/FOV. Re-loaded on game start; live-updates while the settings UI is open (multicast change delegate already in place, so the HUD reticle repaints the next frame as values change).
+- **Settings UI:** v1 ships data-asset-driven configuration (engineer-authored profiles only). A player-facing settings UI with sliders, colour picker, and shape dropdown follows in a near-term iteration. The underlying data shape (USTRUCT with all fields `BlueprintReadWrite`, multicast `OnCrosshairChanged` delegate, runtime `ApplyProfile` swap) is already designed so the UI can be added without refactor.
+- **Non-goals (this feature):** firing/movement-driven crosshair spread (this is an aim trainer with no recoil model), per-weapon crosshair sets, sharing crosshair codes between players.
+
 ## 7. Technical architecture
 
 - **Unreal (client):** runs all subtests, captures trial data, computes raw + aggregate metrics, persists locally (SQLite or equivalent), renders dashboard. The assessment itself is fully offline.
+- **HUD layer (UMG):** a C++ `UCrosshairWidget` overriding `NativePaint` renders the reticle from settings stored on the player's profile asset. Slate primitives only (no children, no UMG layout) for pixel-accurate, snap-to-grid rendering. The widget subscribes to the profile's `OnCrosshairChanged` multicast so any settings change repaints the next frame.
 - **FastAPI (server):** stateless analysis gateway. Core endpoints: `POST /analysis` (accepts session results, returns report payload) and `POST /chat/{session_id}` (multi-turn chat tied to a stored analysis).
 - **Provider abstraction:** `AnalysisProvider` interface exposing `generate_report(scores) → ReportPayload` and `chat_turn(history, message) → str`. New providers slot in without touching call sites.
 - **Local data model:** profile, session, subtest, trial. Per-trial data retained for at least the last N sessions to support re-scoring when methodology evolves.

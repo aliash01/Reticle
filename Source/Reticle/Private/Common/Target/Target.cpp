@@ -30,11 +30,13 @@ void ATarget::HandleHit(const FHitResult& Hit)
 {
     if (Hit.GetComponent() == HeadHitbox)
     {
-       // headshot damage / score
-       OnTargetHit.Broadcast(this, true);
+        UE_LOG(LogTemp, Warning, TEXT("Headshot!"));
+        // headshot damage / score
+        OnTargetHit.Broadcast(this, true);
     }
     else if (Hit.GetComponent() == BodyHitbox)
     {
+        UE_LOG(LogTemp, Warning, TEXT("Bodyshot!"));
        // body damage / score
        OnTargetHit.Broadcast(this, false);
     }

@@ -33,6 +33,7 @@ In v1 of this module, an LLM is **not** in the critical path of drill prescripti
 - After an assessment session, the analysis output includes a **prescribed playlist of 3–5 drills** (5–10 min total) targeting the lowest-percentile constructs.
 - Playlist construction is **rule-based in v1**: rank weaknesses, pick the highest-rated drill per weakness, balance for variety, fit within the time budget.
 - The LLM (already in the loop for the assessment report) can narrate the playlist's rationale to the user, but does not pick the drills in v1.
+- The player's sens/FOV calibration and custom crosshair (see Assessment PRD §6.6) carry over into every drill — drills do not redefine these.
 
 ## 5. Drill library architecture
 

@@ -1,11 +1,29 @@
 #include "Common/SpawnManager.h"
 
+#include "Assessment/AssessmentGameMode.h"
 #include "Common/Target/Target.h"
+#include "Components/BoxComponent.h"
 
 ASpawnManager::ASpawnManager()
 {
     PrimaryActorTick.bCanEverTick = false;
 
+    SpawnArea = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawnArea"));
+    RootComponent = SpawnArea;
+    SpawnArea->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    SpawnArea->SetHiddenInGame(true);
+    SpawnArea->ShapeColor = FColor::Green;
+    SpawnArea->SetBoxExtent(FVector(200.f, 200.f, 50.f));
+}
+
+void ASpawnManager::BeginPlay()
+{
+    Super::BeginPlay();
+
+    if (AAssessmentGameMode* GM = GetWorld()->GetAuthGameMode<AAssessmentGameMode>())
+    {
+        GM->RegisterActiveSpawnManager(this);
+    }
 }
 
 void ASpawnManager::OnLevelStart(int32 NumOfTargets, float SetTargetShowTime, float SetTargetHideTime)
@@ -116,36 +134,21 @@ void ASpawnManager::HandleTargetExpired(ATarget* ExpiredTarget)
     ScheduleEnsureActive();
 }
 
-TArray<FVector> ASpawnManager::GenerateSpawnPositions(int32 NumOfTargets)
-{
-    // Generate random positions between spawnOffset - -> + of x and y.
-    // e.g spawn offset of (200, 200) means they can spawn between [-200,200] for x and [-200,200] for y
-    TArray<FVector> Positions;
-    Positions.Reserve(NumOfTargets);
-
-    RandomStream.Initialize(bUseSeed ? Seed : FMath::Rand());
-
-    for (int32 i = 0; i < NumOfTargets; ++i)
-    {
-       const float X = RandomStream.FRandRange(-SpawnOffset.X, SpawnOffset.X);
-       const float Y = RandomStream.FRandRange(-SpawnOffset.Y, SpawnOffset.Y);
-       Positions.Add(FVector(X, Y, 0.0f));
-    }
-
-    return Positions;
-}
-
 FVector ASpawnManager::GenerateOnePosition()
 {
     constexpr int32 MaxAttempts = 20;
 
-    FVector Candidate = FVector::ZeroVector;
+    const FVector Extent = SpawnArea->GetUnscaledBoxExtent();
+    const FTransform& BoxXform = SpawnArea->GetComponentTransform();
+
+    FVector Candidate = BoxXform.GetLocation();
 
     for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
     {
-        const float X = RandomStream.FRandRange(-SpawnOffset.X, SpawnOffset.X);
-        const float Y = RandomStream.FRandRange(-SpawnOffset.Y, SpawnOffset.Y);
-        Candidate = FVector(X, Y, 0.0f);
+        const float X = RandomStream.FRandRange(-Extent.X, Extent.X);
+        const float Y = RandomStream.FRandRange(-Extent.Y, Extent.Y);
+        const float Z = RandomStream.FRandRange(-Extent.Z, Extent.Z);
+        Candidate = BoxXform.TransformPosition(FVector(X, Y, Z));
 
         if (!IsTooCloseToActiveTarget(Candidate)) return Candidate;
     }

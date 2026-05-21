@@ -11,4 +11,10 @@ TArray<FName> UAimUserSettingsAsset::GetGameRowOptions() const
 	}
 	return ProfilesTable->GetRowNames();
 }
+
+void UAimUserSettingsAsset::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	OnCrosshairChanged.Broadcast();
+}
 #endif

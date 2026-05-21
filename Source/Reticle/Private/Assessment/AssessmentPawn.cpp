@@ -27,8 +27,14 @@ void AAssessmentPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 void AAssessmentPawn::OnShoot(const FInputActionValue& Value)
 {
-	FVector Start = GetActorLocation();
-	FVector End = Start + MaxRange;
+	UE_LOG(LogTemp, Warning, TEXT("Shoot!"));
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	GetController()->GetPlayerViewPoint(CameraLocation, CameraRotation);
+
+	FVector Start = CameraLocation;
+	FVector Direction = CameraRotation.Vector();
+	FVector End = Start + Direction * MaxRange;
 
 	FHitResult Hit;
 	FCollisionQueryParams Params;
@@ -36,11 +42,11 @@ void AAssessmentPawn::OnShoot(const FInputActionValue& Value)
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(
 		Hit, Start, End, ECC_Visibility, Params);
-
+	
 	if (bHit)
 	{
 		if (ATarget* Target = Cast<ATarget>(Hit.GetActor()))
-		{
+		{ 
 			Target->HandleHit(Hit);
 		}
 	}
