@@ -28,6 +28,9 @@ void AAssessmentPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 void AAssessmentPawn::OnShoot(const FInputActionValue& Value)
 {
 	UE_LOG(LogTemp, Warning, TEXT("Shoot!"));
+
+	OnFire.Broadcast();
+	
 	FVector CameraLocation;
 	FRotator CameraRotation;
 	GetController()->GetPlayerViewPoint(CameraLocation, CameraRotation);

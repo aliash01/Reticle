@@ -48,7 +48,10 @@ void ATarget::Activate(const FVector& NewLocation, float LifeTime)
     TM.ClearTimer(LifeCycleTimer);
 
     bActivated = true;
-    SetActorLocation(NewLocation);
+    // Parent-relative: when attached to the SpawnManager, NewLocation is an
+    // offset from the manager ((0,0,0) == its centre). Falls back to world if
+    // the target has no attach parent.
+    SetActorRelativeLocation(NewLocation);
     SetActorHiddenInGame(false);
     SetActorEnableCollision(true);
 

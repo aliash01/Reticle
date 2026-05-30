@@ -3,24 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Assessment/SubtestConfigs/SubtestConfigBase.h"
+#include "Common/Stopwatch.h"
 #include "UObject/Object.h"
 #include "SubtestBase.generated.h"
-
-
 class ASpawnManager;
 
-USTRUCT(BlueprintType)
-struct FSubtestConfig
-{
-	GENERATED_BODY()
 
-	FGuid SessionId;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 Seed = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 NumberOfTrials = 30;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float TrialTime = 0.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float BetweenTrialsTime = 0.5f;
-
-};
 
 USTRUCT(BlueprintType)
 struct FSubtestResult
@@ -38,7 +27,7 @@ struct FSubtestResult
 	UPROPERTY() FString AggregateJson;                 // opaque, subtest-defined (mean/SD/etc.)
 };
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnSubtestEnd, FSubtestResult)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSubtestEndSignature, const FSubtestResult&)
 
 /**
  * Base class for subtests, responsible for managing the execution of configurable trials
@@ -51,15 +40,16 @@ class RETICLE_API USubtestBase : public UObject
 	GENERATED_BODY()
 
 public:
-	void Initialise(ASpawnManager* InSpawnManager);
-	void BeginSubtest(const FSubtestConfig& InSubtestConfig);
+	virtual void Initialise(ASpawnManager* InSpawnManager, APawn* InPlayerPawn);
+	void BeginSubtest(USubtestConfigBase* Config);
 	void EndSubtest(bool bAborted);
 	
+
 	FSubtestResult GetSubtestResults(bool bAborted);
 	
 	bool IsSubtestRunning() const;
 
-	FOnSubtestEnd OnSubtestEnd;
+	FOnSubtestEndSignature OnSubtestEnded;
 
 	virtual UWorld* GetWorld() const override { return GetOuter() ? GetOuter()->GetWorld() : nullptr; }
 protected:
@@ -70,6 +60,8 @@ protected:
 	virtual FName GetSubtestId() const;
 	virtual void OnTrialStart() {}
 	virtual void OnTrialEnd() {}
+	virtual void OnSubtestStart(USubtestConfigBase* Config) {}
+	virtual void OnSubtestEnd() {}
 	
 	void StartTrial();
 	void SetTrialTimer(float Duration);
@@ -78,6 +70,11 @@ protected:
 	
 	UPROPERTY()
 	ASpawnManager* SpawnManager;
+	UPROPERTY() APawn* PlayerPawn;
+
+	FRandomStream RandomStream;
+
+	FStopwatch Stopwatch;
 private:
 	UPROPERTY()
 	int32 CurrentTrialIndex = 0;
@@ -90,5 +87,5 @@ private:
 
 	FTimerHandle TrialTimer;
 	FTimerHandle BetweenTrialsTimer;
-	FRandomStream RandomStream;
+	
 };

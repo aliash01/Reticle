@@ -27,6 +27,7 @@ public:
 	FOnTargetExpired OnTargetExpired;
 
 	void HandleHit(const FHitResult& Hit);
+	// NewLocation is relative to the attach parent (the SpawnManager) — local space.
 	void Activate(const FVector& NewLocation, float LifeTime);
 	void Deactivate();
 

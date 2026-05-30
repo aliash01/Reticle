@@ -3,14 +3,19 @@
 #include "Assessment/AssessmentLog.h"
 #include "Assessment/Subtests/SubtestBase.h"
 
-void USubtestBase::Initialise(ASpawnManager* InSpawnManager)
+void USubtestBase::Initialise(ASpawnManager* InSpawnManager, APawn* InPlayerPawn)
 {
     ensureMsgf(InSpawnManager, TEXT("Initialise: null SpawnManager"));
     SpawnManager = InSpawnManager;
+    PlayerPawn = InPlayerPawn;
 }
 
-void USubtestBase::BeginSubtest(const FSubtestConfig& InSubtestConfig)
+void USubtestBase::BeginSubtest(USubtestConfigBase* Config)
 {
+    if (!ensureMsgf(Config, TEXT("BeginSubtest: null Config"))) return;
+    
+    SubtestConfig = Config->GetConfig();
+    
     if (bSubtestRunning)
     {
         UE_LOG(LogAssessment, Warning, TEXT("BeginSubtest while already running - ignoring"));
@@ -22,7 +27,7 @@ void USubtestBase::BeginSubtest(const FSubtestConfig& InSubtestConfig)
         return;
     }
 
-    if (InSubtestConfig.NumberOfTrials <= 0)
+    if (SubtestConfig.NumberOfTrials <= 0)
     {
         UE_LOG(LogAssessment, Warning, TEXT("NumberOfTrials <= 0")); return;
     }
@@ -31,9 +36,10 @@ void USubtestBase::BeginSubtest(const FSubtestConfig& InSubtestConfig)
     
     bSubtestRunning = true;
     UTCStartTime = FDateTime::UtcNow();
-    SubtestConfig = InSubtestConfig;
     RandomStream.Initialize(SubtestConfig.Seed);
 
+    OnSubtestStart(Config);
+    
     UE_LOG(LogAssessment, Log, TEXT("Subtest %s begin — session=%s seed=%d trials=%d"),
       *GetSubtestId().ToString(), *SubtestConfig.SessionId.ToString(), SubtestConfig.Seed, SubtestConfig.NumberOfTrials);
 
@@ -100,13 +106,15 @@ void USubtestBase::EndSubtest(bool bAborted)
         UE_LOG(LogAssessment, Warning, TEXT("EndSubtest while not running — ignoring"));
         return;
     }
+
+    OnSubtestEnd();
     
     // Clear both for cleanup/safety
     GetWorld()->GetTimerManager().ClearTimer(TrialTimer);
     GetWorld()->GetTimerManager().ClearTimer(BetweenTrialsTimer);
     
     bSubtestRunning = false;
-    OnSubtestEnd.Broadcast(GetSubtestResults(bAborted));
+    OnSubtestEnded.Broadcast(GetSubtestResults(bAborted));
 
     UE_LOG(LogAssessment, Log, TEXT("Subtest %s end — %d/%d trials, aborted=%d"),
       *GetSubtestId().ToString(), CurrentTrialIndex, SubtestConfig.NumberOfTrials, bAborted);

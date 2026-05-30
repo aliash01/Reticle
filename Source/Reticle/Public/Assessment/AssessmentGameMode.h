@@ -4,8 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Subtests/SubtestBase.h"
 #include "AssessmentGameMode.generated.h"
 
+class UReactionTimeConfig;
+class USubtestBase;
 class ASpawnManager;
 /**
  * 
@@ -21,4 +24,13 @@ class RETICLE_API AAssessmentGameMode : public AGameModeBase
 public:
 	void RegisterActiveSpawnManager(ASpawnManager* SpawnManager);
 	virtual void BeginPlay() override;
+	void StartReactionTimeSubtest();
+	void HandleSubtestEnded(const FSubtestResult& Result);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
+	UReactionTimeConfig* ReactionTimeConfig;
+	
+
+private:
+	UPROPERTY() USubtestBase* ActiveSubtest = nullptr;
 };

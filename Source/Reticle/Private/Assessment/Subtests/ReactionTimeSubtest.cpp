@@ -3,3 +3,183 @@
 
 #include "Assessment/Subtests/ReactionTimeSubtest.h"
 
+#include "JsonObjectConverter.h"
+#include "Assessment/AssessmentPawn.h"
+#include "Assessment/SubtestConfigs/ReactionTimeConfig.h"
+#include "Common/SpawnManager.h"
+#include "Common/Target/Target.h"
+
+void UReactionTimeSubtest::OnTrialStart()
+{
+	const float ForeperiodTime = RandomStream.FRandRange(ForeperiodMinTime, ForeperiodMaxTime);
+	CurrentRoundResult.ForePeriodMs = ForeperiodTime * 1000.f;
+	
+	// TODO: Show Foreperiod screen
+
+	bInForeperiod = true;
+	
+	GetWorld()->GetTimerManager().SetTimer(
+		  ForeperiodTimer,            
+		  this,
+		  &UReactionTimeSubtest::ShowTarget,
+		  ForeperiodTime,
+		  false
+	);
+}
+
+void UReactionTimeSubtest::OnFalseStart()
+{
+	CurrentRoundResult.NumFalseStarts++;
+
+	OnTrialStart();
+}
+
+void UReactionTimeSubtest::Initialise(ASpawnManager* InSpawnManager, APawn* InPlayerPawn)
+{
+	Super::Initialise(InSpawnManager, InPlayerPawn);
+
+	if (AAssessmentPawn* AP = Cast<AAssessmentPawn>(InPlayerPawn))
+		AP->OnFire.AddUObject(this, &UReactionTimeSubtest::OnFire);
+	
+	if (SpawnManager)
+	{
+		Target = SpawnManager->SpawnTarget(FVector::ZeroVector, TargetLifetime);
+		Target->Deactivate();
+		Target->OnTargetExpired.AddDynamic(this, &UReactionTimeSubtest::OnTrialTimeExpired);
+		Target->OnTargetHit.AddDynamic(this, &UReactionTimeSubtest::OnTrialCompleted);
+	}
+}
+
+void UReactionTimeSubtest::OnFire()
+{
+	if (!IsSubtestRunning()) return;
+	if (Stopwatch.IsRunning()) return;
+	if (bInForeperiod)
+	{
+		OnFalseStart();
+	}
+}
+
+
+void UReactionTimeSubtest::ShowTarget()
+{
+	bInForeperiod = false;
+	Target->Activate(FVector::ZeroVector, TargetLifetime);
+	Stopwatch.Start();
+}
+
+void UReactionTimeSubtest::OnTrialTimeExpired(ATarget* ExpiredTarget)
+{
+	ExpiredTarget->Deactivate();
+	
+	CurrentRoundResult.Outcome = EReactionOutcome::NoResponse;
+
+	EndTrial();
+}
+
+void UReactionTimeSubtest::OnTrialCompleted(ATarget* HitTarget, bool bHeadshot = false)
+{
+	HitTarget->Deactivate();
+
+	float TargetHitTime = Stopwatch.ElapsedSeconds();
+
+	CurrentRoundResult.ReactionTimeMs = TargetHitTime * 1000.f;
+	CurrentRoundResult.Outcome = EReactionOutcome::Valid;
+
+	EndTrial();
+}
+
+void UReactionTimeSubtest::OnTrialEnd()
+{
+	Super::OnTrialEnd();
+
+	RoundResults.Add(CurrentRoundResult);
+	
+	CurrentRoundResult = FReactionTimeRoundResult();
+	Stopwatch.Stop();
+	Stopwatch.Reset();
+}
+
+FName UReactionTimeSubtest::GetSubtestId() const
+{
+	return FName(TEXT("Reaction Time"));
+}
+
+void UReactionTimeSubtest::OnSubtestStart(USubtestConfigBase* Config)
+{
+	Super::OnSubtestStart(Config);
+
+	if (UReactionTimeConfig* RTConfig = Cast<UReactionTimeConfig>(Config))
+	{
+		FReactionTimeSubtestConfig& RTSubtestConfig = RTConfig->GetReactionTimeConfig();
+		
+		TargetLifetime = RTSubtestConfig.ResponseWindowSeconds;
+		ForeperiodMinTime = RTSubtestConfig.ForeperiodMinTime;
+		ForeperiodMaxTime = RTSubtestConfig.ForeperiodMaxTime;
+	}
+}
+
+void UReactionTimeSubtest::OnSubtestEnd()
+{
+	Super::OnSubtestEnd();
+
+	GetWorld()->GetTimerManager().ClearTimer(ForeperiodTimer);
+}
+
+TArray<FString> UReactionTimeSubtest::GetSubtestTrialRecordsJson()
+{
+	TArray<FString> Out;
+	for (const FReactionTimeRoundResult& R : RoundResults)
+	{
+		FString Json;
+		FJsonObjectConverter::UStructToJsonObjectString(R, Json);
+		Out.Add(Json);
+	}
+	return Out;
+}
+
+FString UReactionTimeSubtest::GetSubtestAggregateJson()
+{
+	FReactionTimeAggregate Agg;
+
+	double Sum = 0.0;
+	for (const FReactionTimeRoundResult& R : RoundResults)
+	{
+		Agg.TotalFalseStarts += R.NumFalseStarts;   // false starts can precede any outcome
+
+		switch (R.Outcome)
+		{
+		case EReactionOutcome::Valid:
+			Agg.ValidCount++;
+			Sum += R.ReactionTimeMs;
+			break;
+		case EReactionOutcome::NoResponse:
+			Agg.NoResponseCount++;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (Agg.ValidCount > 0)
+		Agg.MeanRtMs = static_cast<float>(Sum / Agg.ValidCount);
+
+	if (Agg.ValidCount > 1)   // sample SD (n-1); guard so we never divide by 0
+	{
+		double VarSum = 0.0;
+		for (const FReactionTimeRoundResult& R : RoundResults)
+			if (R.Outcome == EReactionOutcome::Valid)
+			{
+				const double Diff = R.ReactionTimeMs - Agg.MeanRtMs;
+				VarSum += Diff * Diff;
+			}
+		Agg.SdRtMs = static_cast<float>(FMath::Sqrt(VarSum / (Agg.ValidCount - 1)));
+	}
+
+	FString Json;
+	FJsonObjectConverter::UStructToJsonObjectString(Agg, Json);
+	return Json;
+}
+
+
+

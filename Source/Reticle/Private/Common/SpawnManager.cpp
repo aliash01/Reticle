@@ -1,3 +1,5 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #include "Common/SpawnManager.h"
 
 #include "Assessment/AssessmentGameMode.h"
@@ -26,142 +28,85 @@ void ASpawnManager::BeginPlay()
     }
 }
 
-void ASpawnManager::OnLevelStart(int32 NumOfTargets, float SetTargetShowTime, float SetTargetHideTime)
-{
-    TargetShowTime = SetTargetShowTime;
-    TargetHideTime = SetTargetHideTime;
-    TargetsRemaining = NumOfTargets;
-    TotalHits = 0;
-    TotalMisses = 0;
-
-    RandomStream.Initialize(bUseSeed ? Seed : FMath::Rand());
-
-    // TODO: Countdown
-
-    InitializePool();
-    EnsureActiveTargets();
-}
-
-void ASpawnManager::InitializePool()
+ATarget* ASpawnManager::SpawnTarget(const FVector& LocalLocation, float LifeTime)
 {
     if (!TargetClass)
     {
         UE_LOG(LogTemp, Error, TEXT("TargetClass not set on SpawnManager"));
-        return;
+        return nullptr;
     }
 
-    for (int32 i = 0; i < PoolSize; ++i)
-    {
-        ATarget* T = GetWorld()->SpawnActor<ATarget>(
-            TargetClass, FVector::ZeroVector, FRotator::ZeroRotator);
+    ATarget* T = GetWorld()->SpawnActor<ATarget>(
+        TargetClass, GetActorLocation(), FRotator::ZeroRotator);
 
-        if (!T) continue;
+    if (!T) return nullptr;
 
-        T->OnTargetHit.AddDynamic(this, &ASpawnManager::HandleTargetHit);
-        T->OnTargetExpired.AddDynamic(this, &ASpawnManager::HandleTargetExpired);
+    // Parent to this manager so the target's frame IS the manager; Activate then
+    // places it via relative location ((0,0,0) == manager centre).
+    T->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 
-        T->Deactivate();
-        TargetPool.Add(T);
-    }
+    T->OnTargetHit.AddDynamic(this, &ASpawnManager::HandleTargetHit);
+    T->OnTargetExpired.AddDynamic(this, &ASpawnManager::HandleTargetExpired);
+
+    // LifeTime <= 0 => Activate's timer never fires, so the target persists
+    // until the owner calls DestroyTarget.
+    T->Activate(LocalLocation, LifeTime);
+    ActiveTargets.Add(T);
+    return T;
 }
 
-void ASpawnManager::EnsureActiveTargets()
+void ASpawnManager::DestroyTarget(ATarget* Target)
 {
-    int32 ActiveCount = CountActiveTargets();
+    if (!Target) return;
 
-    while (ActiveCount < MaxActiveTargets && TargetsRemaining > 0)
-    {
-        ATarget* T = FindInactiveTarget();
-        if (!T) break;
+    Target->OnTargetHit.RemoveDynamic(this, &ASpawnManager::HandleTargetHit);
+    Target->OnTargetExpired.RemoveDynamic(this, &ASpawnManager::HandleTargetExpired);
 
-        T->Activate(GenerateOnePosition(), TargetShowTime);
-        --TargetsRemaining;
-        ++ActiveCount;
-    }
-
-    if (ActiveCount == 0 && TargetsRemaining == 0)
-    {
-        OnLevelComplete();
-    }
-}
-
-void ASpawnManager::ScheduleEnsureActive()
-{
-    FTimerHandle Handle;
-    GetWorld()->GetTimerManager().SetTimer(
-        Handle, this, &ASpawnManager::EnsureActiveTargets, TargetHideTime, false);
-}
-
-void ASpawnManager::OnLevelComplete()
-{
-}
-
-int32 ASpawnManager::CountActiveTargets() const
-{
-    int32 Count = 0;
-    for (ATarget* T : TargetPool)
-    {
-        if (T && T->IsActivated()) ++Count;
-    }
-    return Count;
-}
-
-ATarget* ASpawnManager::FindInactiveTarget() const
-{
-    for (ATarget* T : TargetPool)
-    {
-        if (T && !T->IsActivated()) return T;
-    }
-    return nullptr;
+    ActiveTargets.Remove(Target);
+    Target->Destroy();
 }
 
 void ASpawnManager::HandleTargetHit(ATarget* HitTarget, bool bHeadshot)
 {
-    if (!HitTarget || !HitTarget->IsActivated()) return;
-
-    HitTarget->Deactivate();
-    ++TotalHits;
-
-    ScheduleEnsureActive();
+    // Relay up; the owner decides what a hit means and when to despawn.
+    OnTargetHit.Broadcast(HitTarget, bHeadshot);
 }
 
 void ASpawnManager::HandleTargetExpired(ATarget* ExpiredTarget)
 {
-    if (!ExpiredTarget) return;
-
-    ++TotalMisses;
-
-    ScheduleEnsureActive();
+    // Target has already self-deactivated; relay the miss up to the owner.
+    OnTargetMissed.Broadcast(ExpiredTarget);
 }
 
-FVector ASpawnManager::GenerateOnePosition()
+FVector ASpawnManager::GeneratePosition(FRandomStream& Stream) const
 {
     constexpr int32 MaxAttempts = 20;
 
     const FVector Extent = SpawnArea->GetUnscaledBoxExtent();
-    const FTransform& BoxXform = SpawnArea->GetComponentTransform();
+    const FTransform Xform = GetActorTransform();
 
-    FVector Candidate = BoxXform.GetLocation();
+    FVector Local = FVector::ZeroVector;
 
     for (int32 Attempt = 0; Attempt < MaxAttempts; ++Attempt)
     {
-        const float X = RandomStream.FRandRange(-Extent.X, Extent.X);
-        const float Y = RandomStream.FRandRange(-Extent.Y, Extent.Y);
-        const float Z = RandomStream.FRandRange(-Extent.Z, Extent.Z);
-        Candidate = BoxXform.TransformPosition(FVector(X, Y, Z));
+        Local.X = Stream.FRandRange(-Extent.X, Extent.X);
+        Local.Y = Stream.FRandRange(-Extent.Y, Extent.Y);
+        Local.Z = Stream.FRandRange(-Extent.Z, Extent.Z);
 
-        if (!IsTooCloseToActiveTarget(Candidate)) return Candidate;
+        // Separation is a world-space distance, so test the world position,
+        // but return the local point so it pairs with SpawnTarget.
+        if (!IsTooCloseToActiveTarget(Xform.TransformPosition(Local))) return Local;
     }
 
-    return Candidate;
+    return Local;
 }
 
-bool ASpawnManager::IsTooCloseToActiveTarget(const FVector& Pos) const
+bool ASpawnManager::IsTooCloseToActiveTarget(const FVector& Location) const
 {
-    for (ATarget* T : TargetPool)
+    for (ATarget* T : ActiveTargets)
     {
         if (T && T->IsActivated() &&
-            FVector::Dist(T->GetActorLocation(), Pos) < MinSeparation)
+            FVector::Dist(T->GetActorLocation(), Location) < MinSeparation)
         {
             return true;
         }
