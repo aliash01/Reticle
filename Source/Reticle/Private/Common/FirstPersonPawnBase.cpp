@@ -57,6 +57,7 @@ void AFirstPersonPawnBase::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 
 void AFirstPersonPawnBase::OnLook(const FInputActionValue& Value)
 {
+	if (bLookLocked) return;
 	if (CachedDegPerCount <= 0.f) return;
 
 	const FVector2D Axis = Value.Get<FVector2D>();

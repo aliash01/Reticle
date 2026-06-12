@@ -4,6 +4,7 @@
 #include "Assessment/Subtests/ReactionTimeSubtest.h"
 
 #include "JsonObjectConverter.h"
+#include "Assessment/AssessmentLog.h"
 #include "Assessment/AssessmentPawn.h"
 #include "Assessment/SubtestConfigs/ReactionTimeConfig.h"
 #include "Common/SpawnManager.h"
@@ -13,6 +14,12 @@ void UReactionTimeSubtest::OnTrialStart()
 {
 	const float ForeperiodTime = RandomStream.FRandRange(ForeperiodMinTime, ForeperiodMaxTime);
 	CurrentRoundResult.ForePeriodMs = ForeperiodTime * 1000.f;
+
+	if (FalseStartsCount >= FalseStartsCap)
+	{
+		EndSubtest(true);
+		return;
+	}
 	
 	// TODO: Show Foreperiod screen
 
@@ -30,7 +37,8 @@ void UReactionTimeSubtest::OnTrialStart()
 void UReactionTimeSubtest::OnFalseStart()
 {
 	CurrentRoundResult.NumFalseStarts++;
-
+	FalseStartsCount++;
+	
 	OnTrialStart();
 }
 
@@ -39,11 +47,21 @@ void UReactionTimeSubtest::Initialise(ASpawnManager* InSpawnManager, APawn* InPl
 	Super::Initialise(InSpawnManager, InPlayerPawn);
 
 	if (AAssessmentPawn* AP = Cast<AAssessmentPawn>(InPlayerPawn))
+	{
 		AP->OnFire.AddUObject(this, &UReactionTimeSubtest::OnFire);
+		AP->LockLook();
+	}
 	
 	if (SpawnManager)
 	{
 		Target = SpawnManager->SpawnTarget(FVector::ZeroVector, TargetLifetime);
+
+		if (!Target)
+		{
+			UE_LOG(LogAssessment, Error, TEXT("Failed to spawn target"));
+			return;
+		}
+		
 		Target->Deactivate();
 		Target->OnTargetExpired.AddDynamic(this, &UReactionTimeSubtest::OnTrialTimeExpired);
 		Target->OnTargetHit.AddDynamic(this, &UReactionTimeSubtest::OnTrialCompleted);
@@ -53,7 +71,6 @@ void UReactionTimeSubtest::Initialise(ASpawnManager* InSpawnManager, APawn* InPl
 void UReactionTimeSubtest::OnFire()
 {
 	if (!IsSubtestRunning()) return;
-	if (Stopwatch.IsRunning()) return;
 	if (bInForeperiod)
 	{
 		OnFalseStart();
@@ -109,20 +126,40 @@ void UReactionTimeSubtest::OnSubtestStart(USubtestConfigBase* Config)
 {
 	Super::OnSubtestStart(Config);
 
-	if (UReactionTimeConfig* RTConfig = Cast<UReactionTimeConfig>(Config))
+	UReactionTimeConfig* RTConfig = Cast<UReactionTimeConfig>(Config);
+
+	if (!RTConfig)
 	{
-		FReactionTimeSubtestConfig& RTSubtestConfig = RTConfig->GetReactionTimeConfig();
-		
-		TargetLifetime = RTSubtestConfig.ResponseWindowSeconds;
-		ForeperiodMinTime = RTSubtestConfig.ForeperiodMinTime;
-		ForeperiodMaxTime = RTSubtestConfig.ForeperiodMaxTime;
+		UE_LOG(LogAssessment, Error, TEXT("ReactionTimeConfig cast failed"));
+		EndSubtest(true);   // don't run a misconfigured subtest
+		return;
 	}
+
+
+	FReactionTimeSubtestConfig& RTSubtestConfig = RTConfig->GetReactionTimeConfig();
+	
+	TargetLifetime = RTSubtestConfig.ResponseWindowSeconds;
+	ForeperiodMinTime = RTSubtestConfig.ForeperiodMinTime;
+	ForeperiodMaxTime = RTSubtestConfig.ForeperiodMaxTime;
+	FalseStartsCap = RTSubtestConfig.FalseStartCap;
+
 }
 
 void UReactionTimeSubtest::OnSubtestEnd()
 {
 	Super::OnSubtestEnd();
 
+	if (AAssessmentPawn* AP = Cast<AAssessmentPawn>(PlayerPawn))
+	{
+		AP->OnFire.RemoveAll(this);
+		AP->UnlockLook();
+	}
+
+	if (SpawnManager)
+	{
+		SpawnManager->DestroyTarget(Target);
+	}
+	
 	GetWorld()->GetTimerManager().ClearTimer(ForeperiodTimer);
 }
 

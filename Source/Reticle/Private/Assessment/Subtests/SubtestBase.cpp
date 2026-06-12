@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Assessment/AssessmentLog.h"
 #include "Assessment/Subtests/SubtestBase.h"
+#include "Assessment/AssessmentLog.h"
+#include "Assessment/UI/TrialProgressWidget.h"
+
 
 void USubtestBase::Initialise(ASpawnManager* InSpawnManager, APawn* InPlayerPawn)
 {
@@ -15,6 +17,15 @@ void USubtestBase::BeginSubtest(USubtestConfigBase* Config)
     if (!ensureMsgf(Config, TEXT("BeginSubtest: null Config"))) return;
     
     SubtestConfig = Config->GetConfig();
+
+    if (SubtestConfig.TrialProgressWidgetClass)
+    {
+        TrialProgressWidget = CreateWidget<UTrialProgressWidget>(GetWorld(), SubtestConfig.TrialProgressWidgetClass);
+    }
+    else
+    {
+        UE_LOG(LogAssessment, Warning, TEXT("TrialProgressWidgetClass not set"));
+    }
     
     if (bSubtestRunning)
     {
@@ -50,7 +61,14 @@ void USubtestBase::StartTrial()
 {
     if (bTrialActive) return;
     bTrialActive = true;
+
+    if (TrialProgressWidget)
+    {
+        TrialProgressWidget->SetVisibility(ESlateVisibility::Collapsed);
+    }
+    
     UE_LOG(LogAssessment, Verbose, TEXT("Trial %d start"), CurrentTrialIndex);   // StartTrial
+    
     OnTrialStart();
 }
 
@@ -67,6 +85,9 @@ void USubtestBase::SetTrialTimer(float Duration)
 
 void USubtestBase::SetBetweenTrialsTimer(float Duration)
 {
+    TrialProgressWidget->UpdateCurrentRoundTick(CurrentTrialIndex) // fill in latest
+    TrialProgressWidget->SetVisibility(ESlateVisibility::Visible);
+    
     ensureMsgf(Duration > 0.f, TEXT("Between Trials Time is invalid (<= 0.f)"));
     GetWorld()->GetTimerManager().SetTimer(
           BetweenTrialsTimer,            

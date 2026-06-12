@@ -87,5 +87,7 @@ private:
 
 	FTimerHandle TrialTimer;
 	FTimerHandle BetweenTrialsTimer;
-	
+
+	UPROPERTY()
+	TObjectPtr<UTrialProgressWidget> TrialProgressWidget;
 };

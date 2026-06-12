@@ -22,6 +22,8 @@ void AAssessmentGameMode::BeginPlay()
 	{
 		UE_LOG(LogAssessment, Warning, TEXT("SpawnManager is null. Potentially not existing in level."))
 	}
+
+	StartReactionTimeSubtest();
 }
 
 void AAssessmentGameMode::StartReactionTimeSubtest()

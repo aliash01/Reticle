@@ -19,6 +19,8 @@ public:
 
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
+	void LockLook() { bLookLocked = true; }
+	void UnlockLook() { bLookLocked = false; }
 protected:
 	virtual void BeginPlay() override;
 
@@ -37,4 +39,6 @@ protected:
 	void RefreshSensCoefficient();
 
 	float CachedDegPerCount = 0.022f;
+
+	bool bLookLocked = false;
 };

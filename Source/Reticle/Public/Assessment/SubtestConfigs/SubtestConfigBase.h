@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Templates/SubclassOf.h"
 #include "SubtestConfigBase.generated.h"
+
+class UTrialProgressWidget;
 
 USTRUCT(BlueprintType)
 struct FSubtestConfig
@@ -16,6 +19,7 @@ struct FSubtestConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 NumberOfTrials = 30;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float TrialTime = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float BetweenTrialsTime = 0.5f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UTrialProgressWidget> TrialProgressWidgetClass;   // shown by every subtest; null = no progress widget
 };
 
 /**

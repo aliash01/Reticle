@@ -67,6 +67,9 @@ class RETICLE_API UReactionTimeSubtest : public USubtestBase
 	UPROPERTY()
 	ATarget* Target;
 
+	int32 FalseStartsCount = 0;
+	int32 FalseStartsCap;
+	
 	bool bInForeperiod = false;
 	float TargetLifetime = 2.f;
 	float ForeperiodMinTime = 1.f;
