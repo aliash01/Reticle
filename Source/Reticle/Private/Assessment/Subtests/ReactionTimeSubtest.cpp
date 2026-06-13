@@ -7,6 +7,7 @@
 #include "Assessment/AssessmentLog.h"
 #include "Assessment/AssessmentPawn.h"
 #include "Assessment/SubtestConfigs/ReactionTimeConfig.h"
+#include "Assessment/UI/PromptWidget.h"
 #include "Common/SpawnManager.h"
 #include "Common/Target/Target.h"
 
@@ -15,14 +16,11 @@ void UReactionTimeSubtest::OnTrialStart()
 	const float ForeperiodTime = RandomStream.FRandRange(ForeperiodMinTime, ForeperiodMaxTime);
 	CurrentRoundResult.ForePeriodMs = ForeperiodTime * 1000.f;
 
-	if (FalseStartsCount >= FalseStartsCap)
+	if (PromptWidget)
 	{
-		EndSubtest(true);
-		return;
+		PromptWidget->ShowPrompt(SubtestConfig.PromptWidgetConfig.Instruction, SubtestConfig.PromptWidgetConfig.BackgroundColour, ForeperiodTime);
 	}
 	
-	// TODO: Show Foreperiod screen
-
 	bInForeperiod = true;
 	
 	GetWorld()->GetTimerManager().SetTimer(
@@ -38,8 +36,26 @@ void UReactionTimeSubtest::OnFalseStart()
 {
 	CurrentRoundResult.NumFalseStarts++;
 	FalseStartsCount++;
-	
-	OnTrialStart();
+
+	bInForeperiod = false;
+		
+	if (FalseStartsCount >= FalseStartsCap)
+	{
+		EndSubtest(true);
+		return;
+	}
+
+	if (PromptWidget)
+	{
+		PromptWidget->ShowPrompt(RTSubtestConfig.FalseStartMessage, RTSubtestConfig.FalseStartBackgroundColour, RTSubtestConfig.FalseStartMessageDuration);
+	}
+	GetWorld()->GetTimerManager().SetTimer(
+		  ForeperiodTimer,            
+		  this,
+		  &UReactionTimeSubtest::OnTrialStart,
+		  RTSubtestConfig.FalseStartMessageDuration,
+		  false
+	);
 }
 
 void UReactionTimeSubtest::Initialise(ASpawnManager* InSpawnManager, APawn* InPlayerPawn)
@@ -134,15 +150,13 @@ void UReactionTimeSubtest::OnSubtestStart(USubtestConfigBase* Config)
 		EndSubtest(true);   // don't run a misconfigured subtest
 		return;
 	}
-
-
-	FReactionTimeSubtestConfig& RTSubtestConfig = RTConfig->GetReactionTimeConfig();
+	
+	RTSubtestConfig = RTConfig->GetReactionTimeConfig();
 	
 	TargetLifetime = RTSubtestConfig.ResponseWindowSeconds;
 	ForeperiodMinTime = RTSubtestConfig.ForeperiodMinTime;
 	ForeperiodMaxTime = RTSubtestConfig.ForeperiodMaxTime;
 	FalseStartsCap = RTSubtestConfig.FalseStartCap;
-
 }
 
 void UReactionTimeSubtest::OnSubtestEnd()

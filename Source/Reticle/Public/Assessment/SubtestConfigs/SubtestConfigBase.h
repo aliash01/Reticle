@@ -7,7 +7,27 @@
 #include "Templates/SubclassOf.h"
 #include "SubtestConfigBase.generated.h"
 
+class UPromptWidget;
 class UTrialProgressWidget;
+
+USTRUCT(BlueprintType)
+struct FTrialProgressWidgetConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UTrialProgressWidget> TrialProgressWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FText Instruction;
+};
+
+USTRUCT(BlueprintType)
+struct FPromptWidgetConfig
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UPromptWidget> PromptWidgetClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FText Instruction;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FLinearColor BackgroundColour;
+};
 
 USTRUCT(BlueprintType)
 struct FSubtestConfig
@@ -19,7 +39,8 @@ struct FSubtestConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 NumberOfTrials = 30;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float TrialTime = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float BetweenTrialsTime = 0.5f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UTrialProgressWidget> TrialProgressWidgetClass;   // shown by every subtest; null = no progress widget
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FTrialProgressWidgetConfig TrialProgressWidgetConfig; 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FPromptWidgetConfig PromptWidgetConfig;
 };
 
 /**

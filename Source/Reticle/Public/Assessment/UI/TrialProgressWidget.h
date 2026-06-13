@@ -20,9 +20,21 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateCurrentRoundTick(int32 Round);
 
-	virtual void NativeConstruct() override;
-
+	void SetMaxTrials(int32 Trials)
+	{
+		TotalTrials = Trials;
+	}
+	
 protected:
+	UFUNCTION(BlueprintCallable, Category = "Utilities|String")
+	static FString PadNumberWithZeros(int32 Number, int32 MaxRounds)
+	{
+		int32 MinDigits = FString::FromInt(MaxRounds).Len();
+		return FString::Printf(TEXT("%0*d"), MinDigits, Number);
+	}
+
+	virtual void NativeConstruct() override;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")
 	int32 TotalTrials = 30;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")

@@ -15,6 +15,9 @@ struct FReactionTimeSubtestConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float ForeperiodMaxTime = 3.f;        // max random wait
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float ResponseWindowSeconds = 2.f;    // time to react before it's a NoResponse (your TargetLifetime)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 FalseStartCap = 10;             // consecutive false starts before aborting the subtest
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FText FalseStartMessage;               // message to show when a false start occurs
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FLinearColor FalseStartBackgroundColour; // colour of the message
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float FalseStartMessageDuration = 2.f; // how long to show the message
 };
 
 /**

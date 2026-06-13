@@ -2,6 +2,7 @@
 
 #include "Assessment/Subtests/SubtestBase.h"
 #include "Assessment/AssessmentLog.h"
+#include "Assessment/UI/PromptWidget.h"
 #include "Assessment/UI/TrialProgressWidget.h"
 
 
@@ -18,13 +19,23 @@ void USubtestBase::BeginSubtest(USubtestConfigBase* Config)
     
     SubtestConfig = Config->GetConfig();
 
-    if (SubtestConfig.TrialProgressWidgetClass)
+    if (SubtestConfig.TrialProgressWidgetConfig.TrialProgressWidgetClass)
     {
-        TrialProgressWidget = CreateWidget<UTrialProgressWidget>(GetWorld(), SubtestConfig.TrialProgressWidgetClass);
+        TrialProgressWidget = CreateWidget<UTrialProgressWidget>(GetWorld(), SubtestConfig.TrialProgressWidgetConfig.TrialProgressWidgetClass);
+        TrialProgressWidget->SetMaxTrials(SubtestConfig.NumberOfTrials);
+        TrialProgressWidget->AddToViewport();
+        TrialProgressWidget->SetVisibility(ESlateVisibility::Collapsed);
     }
     else
     {
         UE_LOG(LogAssessment, Warning, TEXT("TrialProgressWidgetClass not set"));
+    }
+
+    if (SubtestConfig.PromptWidgetConfig.PromptWidgetClass)
+    {
+        PromptWidget = CreateWidget<UPromptWidget>(GetWorld(), SubtestConfig.PromptWidgetConfig.PromptWidgetClass);
+        PromptWidget->AddToViewport();
+        PromptWidget->SetVisibility(ESlateVisibility::Collapsed);
     }
     
     if (bSubtestRunning)
@@ -54,7 +65,7 @@ void USubtestBase::BeginSubtest(USubtestConfigBase* Config)
     UE_LOG(LogAssessment, Log, TEXT("Subtest %s begin — session=%s seed=%d trials=%d"),
       *GetSubtestId().ToString(), *SubtestConfig.SessionId.ToString(), SubtestConfig.Seed, SubtestConfig.NumberOfTrials);
 
-    StartTrial();
+    SetBetweenTrialsTimer(SubtestConfig.BetweenTrialsTime);
 }
 
 void USubtestBase::StartTrial()
@@ -85,8 +96,11 @@ void USubtestBase::SetTrialTimer(float Duration)
 
 void USubtestBase::SetBetweenTrialsTimer(float Duration)
 {
-    TrialProgressWidget->UpdateCurrentRoundTick(CurrentTrialIndex) // fill in latest
-    TrialProgressWidget->SetVisibility(ESlateVisibility::Visible);
+    if (TrialProgressWidget)
+    {
+        TrialProgressWidget->UpdateCurrentRoundTick(CurrentTrialIndex); // fill in latest
+        TrialProgressWidget->SetVisibility(ESlateVisibility::Visible);
+    }
     
     ensureMsgf(Duration > 0.f, TEXT("Between Trials Time is invalid (<= 0.f)"));
     GetWorld()->GetTimerManager().SetTimer(
@@ -107,7 +121,7 @@ void USubtestBase::EndTrial()
     
     GetWorld()->GetTimerManager().ClearTimer(TrialTimer);
     CurrentTrialIndex++;
-
+    
     OnTrialEnd();
     
     if (CurrentTrialIndex >= SubtestConfig.NumberOfTrials)
@@ -153,8 +167,7 @@ FSubtestResult USubtestBase::GetSubtestResults(bool bAborted)
     SubtestResult.TrialRecordsJson = GetSubtestTrialRecordsJson();
     SubtestResult.AggregateJson = GetSubtestAggregateJson();
     return SubtestResult;
-}
-
+}   
 bool USubtestBase::IsSubtestRunning() const
 {
     return bSubtestRunning;

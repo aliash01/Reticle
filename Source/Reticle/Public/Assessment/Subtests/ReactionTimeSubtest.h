@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Assessment/SubtestConfigs/ReactionTimeConfig.h"
 #include "Assessment/Subtests/SubtestBase.h"
 #include "Common/Target/Target.h"
 #include "ReactionTimeSubtest.generated.h"
+
+struct FReactionTimeSubtestConfig;
 
 UENUM(BlueprintType)
 enum class EReactionOutcome : uint8
@@ -79,4 +82,7 @@ class RETICLE_API UReactionTimeSubtest : public USubtestBase
 
 	FReactionTimeRoundResult CurrentRoundResult;
 	TArray<FReactionTimeRoundResult> RoundResults;
+
+	UPROPERTY()
+	FReactionTimeSubtestConfig RTSubtestConfig;
 };

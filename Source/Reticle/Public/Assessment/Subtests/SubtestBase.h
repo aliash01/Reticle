@@ -43,12 +43,11 @@ public:
 	virtual void Initialise(ASpawnManager* InSpawnManager, APawn* InPlayerPawn);
 	void BeginSubtest(USubtestConfigBase* Config);
 	void EndSubtest(bool bAborted);
-	
 
 	FSubtestResult GetSubtestResults(bool bAborted);
 	
 	bool IsSubtestRunning() const;
-
+	
 	FOnSubtestEndSignature OnSubtestEnded;
 
 	virtual UWorld* GetWorld() const override { return GetOuter() ? GetOuter()->GetWorld() : nullptr; }
@@ -75,6 +74,12 @@ protected:
 	FRandomStream RandomStream;
 
 	FStopwatch Stopwatch;
+
+	UPROPERTY()
+	TObjectPtr<UTrialProgressWidget> TrialProgressWidget;
+
+	UPROPERTY()
+	TObjectPtr<UPromptWidget> PromptWidget;
 private:
 	UPROPERTY()
 	int32 CurrentTrialIndex = 0;
@@ -88,6 +93,5 @@ private:
 	FTimerHandle TrialTimer;
 	FTimerHandle BetweenTrialsTimer;
 
-	UPROPERTY()
-	TObjectPtr<UTrialProgressWidget> TrialProgressWidget;
+
 };
