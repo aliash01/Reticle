@@ -8,6 +8,7 @@
 #include "AssessmentGameMode.generated.h"
 
 class UReactionTimeConfig;
+class UFlickConfig;
 class USubtestBase;
 class ASpawnManager;
 /**
@@ -25,11 +26,15 @@ public:
 	void RegisterActiveSpawnManager(ASpawnManager* SpawnManager);
 	virtual void BeginPlay() override;
 	void StartReactionTimeSubtest();
+	void StartFlickSubtest();
 	void HandleSubtestEnded(const FSubtestResult& Result);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
 	UReactionTimeConfig* ReactionTimeConfig;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
+	UFlickConfig* FlickConfig;
+
 
 private:
 	UPROPERTY() USubtestBase* ActiveSubtest = nullptr;
