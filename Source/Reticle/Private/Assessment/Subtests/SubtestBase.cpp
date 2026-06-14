@@ -65,7 +65,7 @@ void USubtestBase::BeginSubtest(USubtestConfigBase* Config)
     UE_LOG(LogAssessment, Log, TEXT("Subtest %s begin — session=%s seed=%d trials=%d"),
       *GetSubtestId().ToString(), *SubtestConfig.SessionId.ToString(), SubtestConfig.Seed, SubtestConfig.NumberOfTrials);
 
-    SetBetweenTrialsTimer(SubtestConfig.BetweenTrialsTime);
+    BeginBetweenTrials();
 }
 
 void USubtestBase::StartTrial()
@@ -77,7 +77,11 @@ void USubtestBase::StartTrial()
     {
         TrialProgressWidget->SetVisibility(ESlateVisibility::Collapsed);
     }
-    
+    if (PromptWidget)
+    {
+        PromptWidget->HidePrompt();   // clear the get-ready prompt before the trial
+    }
+
     UE_LOG(LogAssessment, Verbose, TEXT("Trial %d start"), CurrentTrialIndex);   // StartTrial
     
     OnTrialStart();
@@ -94,22 +98,65 @@ void USubtestBase::SetTrialTimer(float Duration)
           false);
 }
 
-void USubtestBase::SetBetweenTrialsTimer(float Duration)
+void USubtestBase::BeginBetweenTrials()
+{
+    // Three independently-gated phases run in order, each skipping straight to the next if
+    // its widget isn't set or its time <= 0: round progress -> prompt -> blank gap -> trial.
+    ShowRoundProgress();
+}
+
+void USubtestBase::ShowRoundProgress()
+{
+    const FTrialProgressWidgetConfig& Cfg = SubtestConfig.TrialProgressWidgetConfig;
+    if (TrialProgressWidget && Cfg.Time > 0.f)
+    {
+        TrialProgressWidget->SetInstruction(Cfg.Instruction);
+        TrialProgressWidget->UpdateCurrentRoundTick(CurrentTrialIndex);
+        TrialProgressWidget->SetVisibility(ESlateVisibility::Visible);
+
+        GetWorld()->GetTimerManager().SetTimer(
+              BetweenTrialsTimer, this, &USubtestBase::ShowRoundPrompt, Cfg.Time, false);
+        return;
+    }
+
+    ShowRoundPrompt();   // phase skipped
+}
+
+void USubtestBase::ShowRoundPrompt()
 {
     if (TrialProgressWidget)
     {
-        TrialProgressWidget->UpdateCurrentRoundTick(CurrentTrialIndex); // fill in latest
-        TrialProgressWidget->SetVisibility(ESlateVisibility::Visible);
+        TrialProgressWidget->SetVisibility(ESlateVisibility::Collapsed);
     }
-    
-    ensureMsgf(Duration > 0.f, TEXT("Between Trials Time is invalid (<= 0.f)"));
-    GetWorld()->GetTimerManager().SetTimer(
-          BetweenTrialsTimer,            
-          this,
-          &USubtestBase::StartTrial,
-          Duration,
-          false
-    );
+
+    const FPromptWidgetConfig& Cfg = SubtestConfig.PromptWidgetConfig;
+    if (PromptWidget && Cfg.Time > 0.f)
+    {
+        // Duration 0 = manual hide; the timer below drives the handoff.
+        PromptWidget->ShowPrompt(Cfg.Instruction, Cfg.BackgroundColour, 0.f);
+
+        GetWorld()->GetTimerManager().SetTimer(
+              BetweenTrialsTimer, this, &USubtestBase::ShowPreRoundBlank, Cfg.Time, false);
+        return;
+    }
+
+    ShowPreRoundBlank();   // phase skipped
+}
+
+void USubtestBase::ShowPreRoundBlank()
+{
+    // Clear any prompt/progress so the last beat before the round is blank.
+    if (PromptWidget) { PromptWidget->HidePrompt(); }
+    if (TrialProgressWidget) { TrialProgressWidget->SetVisibility(ESlateVisibility::Collapsed); }
+
+    if (SubtestConfig.BetweenTrialsTime > 0.f)
+    {
+        GetWorld()->GetTimerManager().SetTimer(
+              BetweenTrialsTimer, this, &USubtestBase::StartTrial, SubtestConfig.BetweenTrialsTime, false);
+        return;
+    }
+
+    StartTrial();   // no blank gap configured
 }
 
 void USubtestBase::EndTrial()
@@ -130,7 +177,7 @@ void USubtestBase::EndTrial()
     }
     else
     {
-        SetBetweenTrialsTimer(SubtestConfig.BetweenTrialsTime);
+        BeginBetweenTrials();
     }
 }
 

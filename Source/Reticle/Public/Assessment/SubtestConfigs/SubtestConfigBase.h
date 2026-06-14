@@ -17,6 +17,7 @@ struct FTrialProgressWidgetConfig
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UTrialProgressWidget> TrialProgressWidgetClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FText Instruction;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float Time = 0.f;   // seconds to show the round-progress screen between rounds; 0 = skip this phase
 };
 
 USTRUCT(BlueprintType)
@@ -27,6 +28,7 @@ struct FPromptWidgetConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TSubclassOf<UPromptWidget> PromptWidgetClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FText Instruction;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FLinearColor BackgroundColour;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float Time = 0.f;   // seconds to show this prompt between rounds; 0 = skip this phase
 };
 
 USTRUCT(BlueprintType)
@@ -38,8 +40,8 @@ struct FSubtestConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 Seed = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) int32 NumberOfTrials = 30;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float TrialTime = 0.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float BetweenTrialsTime = 0.5f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) FTrialProgressWidgetConfig TrialProgressWidgetConfig; 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float BetweenTrialsTime = 0.5f;   // seconds of blank screen right before each round starts; 0 = none
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) FTrialProgressWidgetConfig TrialProgressWidgetConfig;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) FPromptWidgetConfig PromptWidgetConfig;
 };
 

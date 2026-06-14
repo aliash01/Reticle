@@ -64,7 +64,13 @@ protected:
 	
 	void StartTrial();
 	void SetTrialTimer(float Duration);
-	void SetBetweenTrialsTimer(float Duration);
+	// Between-rounds sequence. Each phase runs only if its widget is set and its time > 0,
+	// otherwise it falls straight through to the next: progress -> prompt -> blank gap -> trial.
+	void BeginBetweenTrials();
+	void ShowRoundProgress();
+	void ShowRoundPrompt();
+	void ShowPreRoundBlank();
+
 	void EndTrial();
 	
 	UPROPERTY()

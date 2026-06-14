@@ -57,7 +57,7 @@ All subtests use **fixed difficulty parameters** identical for every player, eve
 
 1. **Simple Reaction Time** — single target appears at fixed location after a random foreperiod (1–3s). Click to dismiss. Measures baseline response latency.
 2. **Flick Accuracy** — target appears at random angular distance (8°–45°) and angular size (1.5°–5°). Snap and click. Captures: time-to-first-hit, angular error at first shot, overshoot magnitude.
-3. **Smooth Tracking** — target follows a quasi-sinusoidal path for ~15s per trial; hold fire on target. Captures angular error over time and time-on-target ratio.
+3. **Smooth Tracking** — target follows a complex, seed-generated quasi-sinusoidal path; the player holds the crosshair on it. Run as **4–6 trials of ~10s** (fewer, longer trials than the ~30-trial default — suited to sustained pursuit). No shooting is required, but fire state is recorded per sample so trigger discipline (firing only while on target) can be analysed. Captures angular error over time and time-on-target ratio.
 4. **Target Switching** — two targets alternate active state at 0.5–1.5s intervals; flick, confirm hit, flick to next. Captures compound flick + micro-correction efficiency.
 5. **Pre-Aim / Crosshair Placement** — targets spawn at unpredictable but distribution-known locations (e.g. corners of a room). Captures crosshair position at spawn time and time-to-first-hit. The single "cognitive" subtest, measuring positional anticipation.
 

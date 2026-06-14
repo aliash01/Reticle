@@ -5,8 +5,10 @@
 #include "Assessment/AssessmentLog.h"
 #include "Assessment/SubtestConfigs/FlickConfig.h"
 #include "Assessment/SubtestConfigs/ReactionTimeConfig.h"
+#include "Assessment/SubtestConfigs/TrackingConfig.h"
 #include "Assessment/Subtests/FlickSubtest.h"
 #include "Assessment/Subtests/ReactionTimeSubtest.h"
+#include "Assessment/Subtests/TrackingSubtest.h"
 #include "Assessment/Subtests/SubtestBase.h"
 #include "Common/SpawnManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -26,7 +28,8 @@ void AAssessmentGameMode::BeginPlay()
 	}
 
 	//StartReactionTimeSubtest();
-	StartFlickSubtest();
+	//StartFlickSubtest();
+	StartTrackingSubtest();
 }
 
 void AAssessmentGameMode::StartReactionTimeSubtest()
@@ -71,6 +74,28 @@ void AAssessmentGameMode::StartFlickSubtest()
 
 	FlickConfig->GetConfig().SessionId = FGuid::NewGuid();
 	ActiveSubtest->BeginSubtest(FlickConfig);
+}
+
+void AAssessmentGameMode::StartTrackingSubtest()
+{
+	ActiveSubtest = NewObject<UTrackingSubtest>(this);
+	if (!ActiveSubtest)
+	{
+		UE_LOG(LogAssessment, Error, TEXT("Failed to create TrackingSubtest"));
+		return;
+	}
+
+	if (!TrackingConfig)
+	{
+		UE_LOG(LogAssessment, Error, TEXT("TrackingConfig not assigned"));
+		return;
+	}
+
+	ActiveSubtest->OnSubtestEnded.AddUObject(this, &AAssessmentGameMode::HandleSubtestEnded);
+	ActiveSubtest->Initialise(ActiveSpawnManager, UGameplayStatics::GetPlayerPawn(this, 0));
+
+	TrackingConfig->GetConfig().SessionId = FGuid::NewGuid();
+	ActiveSubtest->BeginSubtest(TrackingConfig);
 }
 
 void AAssessmentGameMode::HandleSubtestEnded(const FSubtestResult& Result)

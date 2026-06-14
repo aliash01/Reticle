@@ -9,6 +9,7 @@
 
 class UReactionTimeConfig;
 class UFlickConfig;
+class UTrackingConfig;
 class USubtestBase;
 class ASpawnManager;
 /**
@@ -27,6 +28,7 @@ public:
 	virtual void BeginPlay() override;
 	void StartReactionTimeSubtest();
 	void StartFlickSubtest();
+	void StartTrackingSubtest();
 	void HandleSubtestEnded(const FSubtestResult& Result);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
@@ -34,6 +36,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
 	UFlickConfig* FlickConfig;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
+	UTrackingConfig* TrackingConfig;
 
 
 private:

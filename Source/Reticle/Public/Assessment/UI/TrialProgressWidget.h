@@ -6,6 +6,8 @@
 #include "Blueprint/UserWidget.h"
 #include "TrialProgressWidget.generated.h"
 
+class UTextBlock;
+
 /**
  *
  */
@@ -24,8 +26,15 @@ public:
 	{
 		TotalTrials = Trials;
 	}
-	
+
+	// Sets the optional instruction text (fed by TrialProgressWidgetConfig.Instruction).
+	void SetInstruction(const FText& Instruction);
+
 protected:
+	// Name a Text Block "InstructionText" in the WBP to show the instruction; optional.
+	UPROPERTY(meta = (BindWidgetOptional))
+	UTextBlock* InstructionText;
+
 	UFUNCTION(BlueprintCallable, Category = "Utilities|String")
 	static FString PadNumberWithZeros(int32 Number, int32 MaxRounds)
 	{
