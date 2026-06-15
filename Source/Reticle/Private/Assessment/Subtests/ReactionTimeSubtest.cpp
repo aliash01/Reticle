@@ -110,7 +110,7 @@ void UReactionTimeSubtest::OnTrialTimeExpired(ATarget* ExpiredTarget)
 	EndTrial();
 }
 
-void UReactionTimeSubtest::OnTrialCompleted(ATarget* HitTarget, bool bHeadshot = false)
+void UReactionTimeSubtest::OnTrialCompleted(ATarget* HitTarget)
 {
 	HitTarget->Deactivate();
 

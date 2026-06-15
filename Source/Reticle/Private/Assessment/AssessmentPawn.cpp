@@ -47,11 +47,11 @@ void AAssessmentPawn::FireShot()
 
 	bool bHit = GetWorld()->LineTraceSingleByChannel(
 		Hit, Start, End, ECC_Visibility, Params);
-	
+
 	if (bHit)
 	{
 		if (ATarget* Target = Cast<ATarget>(Hit.GetActor()))
-		{ 
+		{
 			Target->HandleHit(Hit);
 		}
 	}

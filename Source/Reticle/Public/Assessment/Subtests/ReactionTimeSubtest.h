@@ -58,7 +58,7 @@ class RETICLE_API UReactionTimeSubtest : public USubtestBase
 	UFUNCTION()
 	void OnTrialTimeExpired(ATarget* ExpiredTarget);
 	UFUNCTION()
-	void OnTrialCompleted(ATarget* HitTarget, bool bHeadshot);
+	void OnTrialCompleted(ATarget* HitTarget);
 	virtual void OnTrialEnd() override;
 	virtual FName GetSubtestId() const override;
 	virtual void OnSubtestStart(USubtestConfigBase* Config) override;

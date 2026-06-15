@@ -107,7 +107,7 @@ void UFlickSubtest::OnFlickFire()
 	CurrentRoundResult.Shots.Add(Shot);
 }
 
-void UFlickSubtest::OnFlickHit(ATarget* HitTarget, bool bHeadshot)
+void UFlickSubtest::OnFlickHit(ATarget* HitTarget)
 {
 	HitTarget->Deactivate();
 

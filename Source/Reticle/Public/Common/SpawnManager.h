@@ -11,7 +11,7 @@ class UBoxComponent;
 
 // Relayed up to the owning class (e.g. the active subtest) when one of this
 // manager's targets is hit, or expires unhit. The owner binds these once.
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnTargetHitSignature, ATarget* /*Target*/, bool /*bHeadshot*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnTargetHitSignature, ATarget* /*Target*/);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTargetMissedSignature, ATarget* /*Target*/);
 
 /**
@@ -65,7 +65,7 @@ private:
 
 	// Bound to each spawned target; relays its event up via the delegates above.
 	UFUNCTION()
-	void HandleTargetHit(ATarget* HitTarget, bool bHeadshot);
+	void HandleTargetHit(ATarget* HitTarget);
 
 	UFUNCTION()
 	void HandleTargetExpired(ATarget* ExpiredTarget);

@@ -10,6 +10,7 @@
 class UReactionTimeConfig;
 class UFlickConfig;
 class UTrackingConfig;
+class USwitchingConfig;
 class USubtestBase;
 class ASpawnManager;
 /**
@@ -29,6 +30,7 @@ public:
 	void StartReactionTimeSubtest();
 	void StartFlickSubtest();
 	void StartTrackingSubtest();
+	void StartSwitchingSubtest();
 	void HandleSubtestEnded(const FSubtestResult& Result);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
@@ -39,6 +41,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
 	UTrackingConfig* TrackingConfig;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
+	USwitchingConfig* SwitchingConfig;
 
 
 private:

@@ -9,6 +9,8 @@
 #include "Assessment/Subtests/FlickSubtest.h"
 #include "Assessment/Subtests/ReactionTimeSubtest.h"
 #include "Assessment/Subtests/TrackingSubtest.h"
+#include "Assessment/SubtestConfigs/SwitchingConfig.h"
+#include "Assessment/Subtests/SwitchingSubtest.h"
 #include "Assessment/Subtests/SubtestBase.h"
 #include "Common/SpawnManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -29,7 +31,8 @@ void AAssessmentGameMode::BeginPlay()
 
 	//StartReactionTimeSubtest();
 	//StartFlickSubtest();
-	StartTrackingSubtest();
+	//StartTrackingSubtest();
+	StartSwitchingSubtest();
 }
 
 void AAssessmentGameMode::StartReactionTimeSubtest()
@@ -96,6 +99,28 @@ void AAssessmentGameMode::StartTrackingSubtest()
 
 	TrackingConfig->GetConfig().SessionId = FGuid::NewGuid();
 	ActiveSubtest->BeginSubtest(TrackingConfig);
+}
+
+void AAssessmentGameMode::StartSwitchingSubtest()
+{
+	ActiveSubtest = NewObject<USwitchingSubtest>(this);
+	if (!ActiveSubtest)
+	{
+		UE_LOG(LogAssessment, Error, TEXT("Failed to create SwitchingSubtest"));
+		return;
+	}
+
+	if (!SwitchingConfig)
+	{
+		UE_LOG(LogAssessment, Error, TEXT("SwitchingConfig not assigned"));
+		return;
+	}
+
+	ActiveSubtest->OnSubtestEnded.AddUObject(this, &AAssessmentGameMode::HandleSubtestEnded);
+	ActiveSubtest->Initialise(ActiveSpawnManager, UGameplayStatics::GetPlayerPawn(this, 0));
+
+	SwitchingConfig->GetConfig().SessionId = FGuid::NewGuid();
+	ActiveSubtest->BeginSubtest(SwitchingConfig);
 }
 
 void AAssessmentGameMode::HandleSubtestEnded(const FSubtestResult& Result)

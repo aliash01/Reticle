@@ -66,10 +66,10 @@ void ASpawnManager::DestroyTarget(ATarget* Target)
     Target->Destroy();
 }
 
-void ASpawnManager::HandleTargetHit(ATarget* HitTarget, bool bHeadshot)
+void ASpawnManager::HandleTargetHit(ATarget* HitTarget)
 {
     // Relay up; the owner decides what a hit means and when to despawn.
-    OnTargetHit.Broadcast(HitTarget, bHeadshot);
+    OnTargetHit.Broadcast(HitTarget);
 }
 
 void ASpawnManager::HandleTargetExpired(ATarget* ExpiredTarget)

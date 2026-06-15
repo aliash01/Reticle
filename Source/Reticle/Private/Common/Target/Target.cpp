@@ -3,9 +3,6 @@
 
 #include "Common/Target/Target.h"
 
-#include "Components/CapsuleComponent.h"
-#include "Components/SphereComponent.h"
-
 // Sets default values
 ATarget::ATarget()
 {
@@ -13,33 +10,20 @@ ATarget::ATarget()
 
     MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
     RootComponent = MeshComponent;
-    MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    BodyHitbox = CreateDefaultSubobject<UCapsuleComponent>(TEXT("BodyHitbox"));
-    BodyHitbox->SetupAttachment(MeshComponent);
-    BodyHitbox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    BodyHitbox->SetCollisionResponseToAllChannels(ECR_Block);
-
-    HeadHitbox = CreateDefaultSubobject<USphereComponent>(TEXT("HeadHitbox"));
-    HeadHitbox->SetupAttachment(MeshComponent);
-    HeadHitbox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    HeadHitbox->SetCollisionResponseToAllChannels(ECR_Block);
+    // The mesh's own simple collision IS the hitbox, so the hittable shape always
+    // matches the assigned mesh (sphere, cylinder, ...) with no per-shape subclass.
+    // QueryOnly: traces/overlaps hit it, but it never physically blocks movement.
+    MeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    MeshComponent->SetCollisionResponseToAllChannels(ECR_Block);
 }
 
 void ATarget::HandleHit(const FHitResult& Hit)
 {
-    if (Hit.GetComponent() == HeadHitbox)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Headshot!"));
-        // headshot damage / score
-        OnTargetHit.Broadcast(this, true);
-    }
-    else if (Hit.GetComponent() == BodyHitbox)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Bodyshot!"));
-       // body damage / score
-       OnTargetHit.Broadcast(this, false);
-    }
+    // Base targets have no head/body split — any hit is just a hit. A headshot
+    // variant (AHeadshotTarget) overrides this to add a head hitbox and its own
+    // headshot signal, leaving the base delegate headshot-free.
+    OnTargetHit.Broadcast(this);
 }
 
 void ATarget::Activate(const FVector& NewLocation, float LifeTime)

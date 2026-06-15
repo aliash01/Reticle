@@ -71,7 +71,7 @@ class RETICLE_API UFlickSubtest : public USubtestBase
 	void OnFlickFire();   // every shot — records its accuracy
 
 	UFUNCTION()
-	void OnFlickHit(ATarget* HitTarget, bool bHeadshot);   // a shot connected -> ends the trial
+	void OnFlickHit(ATarget* HitTarget);   // a shot connected -> ends the trial
 	UFUNCTION()
 	void OnFlickMissed(ATarget* ExpiredTarget);            // timeout -> miss
 
