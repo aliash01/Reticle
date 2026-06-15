@@ -59,7 +59,8 @@ All subtests use **fixed difficulty parameters** identical for every player, eve
 2. **Flick Accuracy** — target appears at random angular distance (8°–45°) and angular size (1.5°–5°). Snap and click. Captures: time-to-first-hit, angular error at first shot, overshoot magnitude.
 3. **Smooth Tracking** — target follows a complex, seed-generated quasi-sinusoidal path; the player holds the crosshair on it. Run as **4–6 trials of ~10s** (fewer, longer trials than the ~30-trial default — suited to sustained pursuit). No shooting is required, but fire state is recorded per sample so trigger discipline (firing only while on target) can be analysed. Captures angular error over time and time-on-target ratio.
 4. **Target Switching** — two targets alternate active state at 0.5–1.5s intervals; flick, confirm hit, flick to next. Captures compound flick + micro-correction efficiency.
-5. **Pre-Aim / Crosshair Placement** — targets spawn at unpredictable but distribution-known locations (e.g. corners of a room). Captures crosshair position at spawn time and time-to-first-hit. The single "cognitive" subtest, measuring positional anticipation.
+5. **Precision** — target appears at a **fixed distance (no distance variation)** with **randomised angular size** (small, e.g. ~0.3–1.5°). Holding distance constant isolates fine crosshair placement from ballistic travel, leaving target size — recorded per trial — as the difficulty variable, so an accuracy-vs-size curve can be derived downstream. Captures: time-to-first-hit, angular error at first shot, shots-to-hit, and per-trial target size.
+6. **Reactive Tracking** — target follows an **erratic, unpredictable, seed-generated path** (random direction/speed changes at random intervals), in contrast to the smooth predictable path of #3. Same continuous-control capture as Smooth Tracking — angular error over time, time-on-target ratio, per-sample fire state — run as **4–6 trials of ~10s**. Isolates reactivity / correction speed (how fast error recovers after each direction change) rather than smooth pursuit.
 
 ### 6.3 Scoring
 - Per-trial raw metrics captured client-side using frame-accurate timing (`FPlatformTime::Seconds()`).
@@ -128,7 +129,7 @@ SessionResults {
 
 ## 9. Success metrics
 
-- **Validity demo (seeded with self-collected data):** at least 3 of 5 subtests show test-retest reliability r ≥ 0.7 across repeat sessions.
+- **Validity demo (seeded with self-collected data):** at least 4 of 6 subtests show test-retest reliability r ≥ 0.7 across repeat sessions.
 - **Coverage:** pairwise correlations between subtest scores < 0.7, indicating each captures a distinct dimension.
 - **Engagement:** ≥ 80% of started assessments completed in one sitting.
 - **Retention:** repeat-test rate within 14 days of first session (target TBD once baseline is observed).
