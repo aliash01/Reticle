@@ -68,7 +68,8 @@ class RETICLE_API UTrackingSubtest : public USubtestBase
 	virtual void OnTrialEnd() override;
 
 	void SampleTick();          // fixed-rate: move the target + record one sample
-	FAxisWave MakeWave();       // seeded path for one axis
+	FAxisWave MakeWave();       // seeded path for one axis (smooth mode)
+	void PickReactiveVelocity();   // reactive mode: choose a new random velocity + hold time
 
 	virtual FName GetSubtestId() const override;
 	virtual TArray<FString> GetSubtestTrialRecordsJson() override;
@@ -85,6 +86,12 @@ class RETICLE_API UTrackingSubtest : public USubtestBase
 
 	FAxisWave YawWave;     // horizontal (local Y)
 	FAxisWave PitchWave;   // vertical (local Z)
+
+	// Reactive-path state (PathMode == Reactive): integrated local offset + current velocity,
+	// where .X = horizontal (local Y) and .Y = vertical (local Z).
+	FVector2D ReactivePos = FVector2D::ZeroVector;
+	FVector2D ReactiveVel = FVector2D::ZeroVector;
+	float ReactiveTimeUntilChange = 0.f;
 
 	FTimerHandle SampleTimer;
 

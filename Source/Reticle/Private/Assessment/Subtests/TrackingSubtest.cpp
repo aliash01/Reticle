@@ -34,6 +34,16 @@ FAxisWave UTrackingSubtest::MakeWave()
 	return W;
 }
 
+void UTrackingSubtest::PickReactiveVelocity()
+{
+	// Random direction in the local Y/Z plane at a fixed speed, held for a random short
+	// interval before being re-chosen — this is what makes the reactive path dart.
+	const float Angle = RandomStream.FRandRange(0.f, 2.f * PI);
+	ReactiveVel = FVector2D(FMath::Cos(Angle), FMath::Sin(Angle)) * TrackingSubtestConfig.ReactiveSpeed;
+	ReactiveTimeUntilChange = RandomStream.FRandRange(
+		TrackingSubtestConfig.ReactiveChangeMinSeconds, TrackingSubtestConfig.ReactiveChangeMaxSeconds);
+}
+
 void UTrackingSubtest::Initialise(ASpawnManager* InSpawnManager, APawn* InPlayerPawn)
 {
 	Super::Initialise(InSpawnManager, InPlayerPawn);
@@ -101,9 +111,17 @@ void UTrackingSubtest::OnTrialStart()
 
 	CurrentRoundResult.TrialIndex = RoundResults.Num();
 
-	// Fresh seeded path for this trial.
-	YawWave = MakeWave();
-	PitchWave = MakeWave();
+	// Fresh path for this trial — smooth (sum-of-sines) or reactive (erratic), per config.
+	if (TrackingSubtestConfig.PathMode == ETrackingPathMode::Reactive)
+	{
+		ReactivePos = FVector2D::ZeroVector;
+		PickReactiveVelocity();
+	}
+	else
+	{
+		YawWave = MakeWave();
+		PitchWave = MakeWave();
+	}
 
 	Target->Activate(FVector::ZeroVector, 0.f);   // shown; no auto-expiry — the trial timer ends it
 	Stopwatch.Start();                            // path + sample clock
@@ -123,8 +141,29 @@ void UTrackingSubtest::SampleTick()
 
 	const float T = Stopwatch.ElapsedSeconds();
 
-	// Move the target along the seeded path (local Y = horizontal, Z = vertical).
-	Target->SetActorRelativeLocation(FVector(0.f, YawWave.Evaluate(T), PitchWave.Evaluate(T)));
+	// Move the target (local Y = horizontal, Z = vertical) per the active path model.
+	if (TrackingSubtestConfig.PathMode == ETrackingPathMode::Reactive)
+	{
+		const float Dt = 1.f / FMath::Max(1.f, TrackingSubtestConfig.SampleRateHz);
+		const float Amp = TrackingSubtestConfig.PathAmplitude;
+
+		ReactiveTimeUntilChange -= Dt;
+		if (ReactiveTimeUntilChange <= 0.f) { PickReactiveVelocity(); }
+
+		ReactivePos += ReactiveVel * Dt;
+
+		// Bounce off the amplitude bounds so the target stays in the trackable area.
+		if (ReactivePos.X < -Amp) { ReactivePos.X = -Amp; ReactiveVel.X = -ReactiveVel.X; }
+		else if (ReactivePos.X > Amp) { ReactivePos.X = Amp; ReactiveVel.X = -ReactiveVel.X; }
+		if (ReactivePos.Y < -Amp) { ReactivePos.Y = -Amp; ReactiveVel.Y = -ReactiveVel.Y; }
+		else if (ReactivePos.Y > Amp) { ReactivePos.Y = Amp; ReactiveVel.Y = -ReactiveVel.Y; }
+
+		Target->SetActorRelativeLocation(FVector(0.f, ReactivePos.X, ReactivePos.Y));
+	}
+	else
+	{
+		Target->SetActorRelativeLocation(FVector(0.f, YawWave.Evaluate(T), PitchWave.Evaluate(T)));
+	}
 
 	const AController* Controller = PlayerPawn->GetController();
 	if (!Controller) return;
@@ -176,7 +215,9 @@ void UTrackingSubtest::OnTrialEnd()
 
 FName UTrackingSubtest::GetSubtestId() const
 {
-	return FName(TEXT("Tracking"));
+	return TrackingSubtestConfig.PathMode == ETrackingPathMode::Reactive
+		? FName(TEXT("ReactiveTracking"))
+		: FName(TEXT("Tracking"));
 }
 
 TArray<FString> UTrackingSubtest::GetSubtestTrialRecordsJson()

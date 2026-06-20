@@ -10,7 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTargetHit, ATarget*, HitTarget);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTargetExpired, ATarget*, ExpiredTarget);
 
 UCLASS(Abstract)
-class RETICLE_API ATarget : public AActor
+class RETICLE_API ATarget : public AActor 
 {
 	GENERATED_BODY()
 
@@ -35,6 +35,10 @@ public:
 	// (e.g. Switching). The BP implements the look; no effect on collision or scoring.
 	UFUNCTION(BlueprintImplementableEvent, Category = "Target")
 	void SetHighlighted(bool bHighlighted);
+
+	// Sets the target's uniform scale (Precision randomises target size per trial). Scales the
+	// mesh and its simple collision together, so the hitbox always matches the visible size.
+	void SetSize(float UniformScale);
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

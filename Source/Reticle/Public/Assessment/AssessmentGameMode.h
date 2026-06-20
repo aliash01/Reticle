@@ -11,6 +11,7 @@ class UReactionTimeConfig;
 class UFlickConfig;
 class UTrackingConfig;
 class USwitchingConfig;
+class UPrecisionConfig;
 class USubtestBase;
 class ASpawnManager;
 /**
@@ -31,6 +32,8 @@ public:
 	void StartFlickSubtest();
 	void StartTrackingSubtest();
 	void StartSwitchingSubtest();
+	void StartReactiveTrackingSubtest();
+	void StartPrecisionSubtest();
 	void HandleSubtestEnded(const FSubtestResult& Result);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
@@ -44,6 +47,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
 	USwitchingConfig* SwitchingConfig;
+
+	// Same UTrackingConfig type as TrackingConfig — set its PathMode to Reactive in the asset.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
+	UTrackingConfig* ReactiveTrackingConfig;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
+	UPrecisionConfig* PrecisionConfig;
 
 
 private:

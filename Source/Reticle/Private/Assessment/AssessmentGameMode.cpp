@@ -11,6 +11,8 @@
 #include "Assessment/Subtests/TrackingSubtest.h"
 #include "Assessment/SubtestConfigs/SwitchingConfig.h"
 #include "Assessment/Subtests/SwitchingSubtest.h"
+#include "Assessment/SubtestConfigs/PrecisionConfig.h"
+#include "Assessment/Subtests/PrecisionSubtest.h"
 #include "Assessment/Subtests/SubtestBase.h"
 #include "Common/SpawnManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -32,7 +34,9 @@ void AAssessmentGameMode::BeginPlay()
 	//StartReactionTimeSubtest();
 	//StartFlickSubtest();
 	//StartTrackingSubtest();
-	StartSwitchingSubtest();
+	//StartSwitchingSubtest();
+	//StartReactiveTrackingSubtest();
+	StartPrecisionSubtest();
 }
 
 void AAssessmentGameMode::StartReactionTimeSubtest()
@@ -121,6 +125,52 @@ void AAssessmentGameMode::StartSwitchingSubtest()
 
 	SwitchingConfig->GetConfig().SessionId = FGuid::NewGuid();
 	ActiveSubtest->BeginSubtest(SwitchingConfig);
+}
+
+void AAssessmentGameMode::StartReactiveTrackingSubtest()
+{
+	// Same class/config type as Smooth Tracking; the asset's PathMode = Reactive selects the
+	// erratic path and makes GetSubtestId report "ReactiveTracking".
+	ActiveSubtest = NewObject<UTrackingSubtest>(this);
+	if (!ActiveSubtest)
+	{
+		UE_LOG(LogAssessment, Error, TEXT("Failed to create ReactiveTrackingSubtest"));
+		return;
+	}
+
+	if (!ReactiveTrackingConfig)
+	{
+		UE_LOG(LogAssessment, Error, TEXT("ReactiveTrackingConfig not assigned"));
+		return;
+	}
+
+	ActiveSubtest->OnSubtestEnded.AddUObject(this, &AAssessmentGameMode::HandleSubtestEnded);
+	ActiveSubtest->Initialise(ActiveSpawnManager, UGameplayStatics::GetPlayerPawn(this, 0));
+
+	ReactiveTrackingConfig->GetConfig().SessionId = FGuid::NewGuid();
+	ActiveSubtest->BeginSubtest(ReactiveTrackingConfig);
+}
+
+void AAssessmentGameMode::StartPrecisionSubtest()
+{
+	ActiveSubtest = NewObject<UPrecisionSubtest>(this);
+	if (!ActiveSubtest)
+	{
+		UE_LOG(LogAssessment, Error, TEXT("Failed to create PrecisionSubtest"));
+		return;
+	}
+
+	if (!PrecisionConfig)
+	{
+		UE_LOG(LogAssessment, Error, TEXT("PrecisionConfig not assigned"));
+		return;
+	}
+
+	ActiveSubtest->OnSubtestEnded.AddUObject(this, &AAssessmentGameMode::HandleSubtestEnded);
+	ActiveSubtest->Initialise(ActiveSpawnManager, UGameplayStatics::GetPlayerPawn(this, 0));
+
+	PrecisionConfig->GetConfig().SessionId = FGuid::NewGuid();
+	ActiveSubtest->BeginSubtest(PrecisionConfig);
 }
 
 void AAssessmentGameMode::HandleSubtestEnded(const FSubtestResult& Result)

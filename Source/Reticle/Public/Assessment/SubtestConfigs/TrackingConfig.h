@@ -6,6 +6,13 @@
 #include "SubtestConfigBase.h"
 #include "TrackingConfig.generated.h"
 
+UENUM(BlueprintType)
+enum class ETrackingPathMode : uint8
+{
+	Smooth,    // sum of two seeded sine harmonics per axis (predictable pursuit)
+	Reactive   // erratic: random velocity held for a random interval, then re-chosen
+};
+
 USTRUCT(BlueprintType)
 struct FTrackingSubtestConfig
 {
@@ -23,6 +30,14 @@ struct FTrackingSubtestConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float PathAmplitude = 150.f;         // max local-space excursion (world units)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float PathMinFreqHz = 0.10f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float PathMaxFreqHz = 0.50f;
+
+	// Smooth uses the sum-of-sines above. Reactive ignores the freq ranges and instead darts
+	// at ReactiveSpeed, re-randomising direction every Change[Min..Max]s, bounded by PathAmplitude.
+	// Default Smooth keeps existing Tracking config assets behaving exactly as before.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) ETrackingPathMode PathMode = ETrackingPathMode::Smooth;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float ReactiveSpeed = 250.f;            // units/sec (reactive mode)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float ReactiveChangeMinSeconds = 0.15f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float ReactiveChangeMaxSeconds = 0.5f;
 };
 
 /**

@@ -3,6 +3,8 @@
 
 #include "Common/Target/Target.h"
 
+#include "Components/StaticMeshComponent.h"
+
 // Sets default values
 ATarget::ATarget()
 {
@@ -24,6 +26,14 @@ void ATarget::HandleHit(const FHitResult& Hit)
     // variant (AHeadshotTarget) overrides this to add a head hitbox and its own
     // headshot signal, leaving the base delegate headshot-free.
     OnTargetHit.Broadcast(this);
+}
+
+void ATarget::SetSize(float UniformScale)
+{
+    if (MeshComponent)
+    {
+        MeshComponent->SetRelativeScale3D(FVector(UniformScale));
+    }
 }
 
 void ATarget::Activate(const FVector& NewLocation, float LifeTime)
