@@ -194,7 +194,11 @@ void USubtestBase::EndSubtest(bool bAborted)
     // Clear both for cleanup/safety
     GetWorld()->GetTimerManager().ClearTimer(TrialTimer);
     GetWorld()->GetTimerManager().ClearTimer(BetweenTrialsTimer);
-    
+
+    // Remove this subtest's widgets so they don't accumulate in the viewport across a battery.
+    if (TrialProgressWidget) { TrialProgressWidget->RemoveFromParent(); TrialProgressWidget = nullptr; }
+    if (PromptWidget) { PromptWidget->RemoveFromParent(); PromptWidget = nullptr; }
+
     bSubtestRunning = false;
     OnSubtestEnded.Broadcast(GetSubtestResults(bAborted));
 

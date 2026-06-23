@@ -14,8 +14,34 @@ class USwitchingConfig;
 class UPrecisionConfig;
 class USubtestBase;
 class ASpawnManager;
+
+// One entry in the assessment battery: which subtest class to run and the config asset to run
+// it with. Paired in the editor; the order of the Battery array is the order subtests run.
+USTRUCT(BlueprintType)
+struct FBatteryStep
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere) TSubclassOf<USubtestBase> SubtestClass;
+	UPROPERTY(EditAnywhere) USubtestConfigBase* Config;
+};
+
+// One completed assessment run — the shared session id plus every subtest's result.
+// Serialized to JSON on disk as the handoff artifact for the analysis pipeline.
+USTRUCT()
+struct FAssessmentSession
+{
+	GENERATED_BODY()
+
+	UPROPERTY() FString SchemaVersion = TEXT("1.0");
+	UPROPERTY() FGuid SessionId;
+	UPROPERTY() FDateTime StartedAtUtc;
+	UPROPERTY() FDateTime CompletedAtUtc;
+	UPROPERTY() TArray<FSubtestResult> Results;
+};
+
 /**
- * 
+ *
  */
 UCLASS()
 class RETICLE_API AAssessmentGameMode : public AGameModeBase
@@ -28,6 +54,10 @@ class RETICLE_API AAssessmentGameMode : public AGameModeBase
 public:
 	void RegisterActiveSpawnManager(ASpawnManager* SpawnManager);
 	virtual void BeginPlay() override;
+
+	// Runs every subtest in Battery back-to-back under one SessionId, then persists the session.
+	void StartAssessment();
+
 	void StartReactionTimeSubtest();
 	void StartFlickSubtest();
 	void StartTrackingSubtest();
@@ -55,7 +85,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Subtest Config")
 	UPrecisionConfig* PrecisionConfig;
 
+	// The ordered battery — fill in the editor with (subtest class, config asset) pairs.
+	UPROPERTY(EditAnywhere, Category="Assessment")
+	TArray<FBatteryStep> Battery;
+
 
 private:
+	void RunStep(int32 Index);
+	void FinishAssessment();
+
 	UPROPERTY() USubtestBase* ActiveSubtest = nullptr;
+
+	// Runtime state for the active battery run.
+	FGuid BatterySessionId;
+	int32 CurrentStepIndex = 0;
+	FDateTime SessionStartedUtc;
+	TArray<FSubtestResult> SessionResults;
 };
