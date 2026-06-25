@@ -49,6 +49,7 @@ class RETICLE_API UTrackingConfig : public USubtestConfigBase
 	GENERATED_BODY()
 
 public:
+	virtual TSubclassOf<USubtestBase> GetSubtestClass() const override;
 	FTrackingSubtestConfig& GetTrackingConfig() { return TrackingConfig; }
 
 protected:

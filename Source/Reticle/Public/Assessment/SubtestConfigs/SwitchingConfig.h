@@ -24,6 +24,7 @@ class RETICLE_API USwitchingConfig : public USubtestConfigBase
 	GENERATED_BODY()
 
 public:
+	virtual TSubclassOf<USubtestBase> GetSubtestClass() const override;
 	FSwitchingSubtestConfig& GetSwitchingConfig() { return SwitchingConfig; }
 
 protected:

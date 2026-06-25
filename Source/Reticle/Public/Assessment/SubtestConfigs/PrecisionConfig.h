@@ -26,6 +26,7 @@ class RETICLE_API UPrecisionConfig : public USubtestConfigBase
 	GENERATED_BODY()
 
 public:
+	virtual TSubclassOf<USubtestBase> GetSubtestClass() const override;
 	FPrecisionSubtestConfig& GetPrecisionConfig() { return PrecisionConfig; }
 
 protected:

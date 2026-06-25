@@ -23,6 +23,7 @@ class RETICLE_API UFlickConfig : public USubtestConfigBase
 	GENERATED_BODY()
 
 public:
+	virtual TSubclassOf<USubtestBase> GetSubtestClass() const override;
 	FFlickSubtestConfig& GetFlickConfig() { return FlickConfig; }
 
 protected:

@@ -29,6 +29,7 @@ class RETICLE_API UReactionTimeConfig : public USubtestConfigBase
 	GENERATED_BODY()
 
 public:
+	virtual TSubclassOf<USubtestBase> GetSubtestClass() const override;
 	FReactionTimeSubtestConfig& GetReactionTimeConfig() { return ReactionTimeConfig; };
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Reaction Time Config")

@@ -9,6 +9,7 @@
 
 class UPromptWidget;
 class UTrialProgressWidget;
+class USubtestBase;
 
 USTRUCT(BlueprintType)
 struct FTrialProgressWidgetConfig
@@ -55,7 +56,11 @@ class RETICLE_API USubtestConfigBase : public UDataAsset
 
 public:
 	FSubtestConfig& GetConfig() { return Config; };
-	 
+
+	// Which subtest class runs this config. Each concrete config overrides this, so the battery
+	// only stores configs and derives the runner — a subtest/config mismatch becomes impossible.
+	virtual TSubclassOf<USubtestBase> GetSubtestClass() const { return nullptr; }
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Base Config")
 	FSubtestConfig Config;
