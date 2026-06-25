@@ -46,7 +46,7 @@ Drill {
   target_type: static | scripted | ai_bot,
   duration_seconds,
   difficulty_levels: [...],
-  weakness_tags: [flick, tracking, switching, pre_aim, reaction],
+  weakness_tags: [reaction, flick, tracking, switching, precision, reactive_tracking],
   scoring: { metrics_captured: [...], composite_formula }
 }
 ```
@@ -57,11 +57,12 @@ Drills are pure content in v1 — code-defined parameters, no runtime tuning. Th
 
 The library starts small and grows. One drill per weakness tag is the minimum bar for v1 of this module; richer coverage follows. Each drill maps to one or more weakness tags.
 
+- **Reaction weakness drills** — door-breach scenarios with very short reaction windows.
 - **Flick weakness drills** — short-engagement scenarios with targets appearing in peripheral vision. Variants in indoor (rooms, doorways) and outdoor (long-sightline ridges).
 - **Tracking weakness drills** — AI bots strafing along predictable lines in open environments; jiggle-peek targets.
 - **Switching weakness drills** — multi-bot rooms where targets activate in sequence.
-- **Pre-aim weakness drills** — "clear the building" scenarios where targets spawn at known angles and crosshair placement is the decisive variable.
-- **Reaction weakness drills** — door-breach scenarios with very short reaction windows.
+- **Precision weakness drills** — "clear the building" scenarios where small targets spawn at known angles and fine crosshair placement on a small target is the decisive variable.
+- **Reactive-tracking weakness drills** — AI bots strafing erratically with unpredictable direction/speed changes, training correction speed rather than smooth pursuit.
 
 Final library size for v1 is deferred until UE content production capacity is scoped.
 

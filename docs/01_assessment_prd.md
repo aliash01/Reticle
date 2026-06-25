@@ -14,7 +14,7 @@ This module is the v1 product. Realistic training drills are a separate downstre
 
 ## 2. Goals
 
-- Deliver a 15–20 minute fixed assessment battery covering 5 independent aim constructs.
+- Deliver a 15–20 minute fixed assessment battery covering 6 independent aim constructs.
 - Produce statistically defensible per-subtest scores (z-scores, percentile bands, confidence intervals) using a comparable design across all users.
 - Generate concise, actionable LLM-written analysis and a follow-up chat scoped to the player's results.
 - Track progress across periodic re-tests (weekly/monthly cadence) via a dashboard.
@@ -36,7 +36,7 @@ Mixed-skill FPS players, hobbyist through competitive. The product is game-agnos
 ## 5. End-to-end user flow
 
 1. **First-time onboarding:** create local profile, enter DPI + in-game sens + FOV (cm/360° calculated and shown), run a short free-aim warmup, complete a per-subtest tutorial (3–5 practice trials each).
-2. **Assessment session:** 5 subtests run back-to-back with brief inter-subtest rest.
+2. **Assessment session:** 6 subtests run back-to-back with brief inter-subtest rest.
 3. **Local scoring:** Unreal computes per-trial raw metrics and per-subtest aggregates; scores are derived against the baked-in normative seed and the player's own history.
 4. **Analysis (online):** results JSON is sent to FastAPI; the LLM returns the short headline report and a chat session is opened.
 5. **Dashboard:** player views composite + per-subtest scores, percentile bands, deltas vs prior session and personal best, and historical trends.
